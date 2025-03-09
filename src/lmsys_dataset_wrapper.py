@@ -2,44 +2,32 @@ import os
 import pandas as pd
 import textwrap
 import random
+import requests
 from datasets import load_dataset
 from IPython.display import display
 
 class DatasetWrapper:
-    def __init__(self, hf_token, verbose=True):
+    def __init__(self, hf_token, dataset_name="lmsys/lmsys-chat-1m", verbose=True):
         self.hf_token = hf_token
-        self.lmsys_dataset = load_dataset(
-            'lmsys/lmsys-chat-1m',
-            revision="main",
-            token=self.hf_token,
-            streaming=self.streaming
-        )
+        self.dataset_name = dataset_name
+        self.headers = {"Authorization": f"Bearer {self.hf_token}"}
+
+        parquet_list_url = f"https://datasets-server.huggingface.co/parquet?dataset={self.dataset_name}"
+        response = requests.get(parquet_list_url, headers=self.headers)
+        if response.status_code != 200:
+            raise ValueError(f"Failed to retrieve parquet files. Status code: {response.status_code}")
+        # Extract URLs from the response JSON
+        parquet_urls = [file['url'] for file in response.json()['parquet_files']]
         self.verbose = verbose
         if verbose:
-            print(self.lmsys_dataset)
+            print("\nParquet URLs:")
+            for url in parquet_urls:
+                print(url)
         self.df_sample = None
         self.df_prompts = None
         self.unwrapped_turns_df = None
 
-        if not self.streaming and verbose:
-            print('Data is cached at:\n')
-            for file_info in self.lmsys_dataset['train'].cache_files:
-                filename = file_info['filename']
-                file_size = os.path.getsize(filename)
-                i = int((len(filename) - 41) / 2)
-                print(f"Filename: {filename[:i]}*{filename[-41:]}\nSize: {file_size} bytes")
-
-    def extract_df_sample(self, n_samples=None, conversation_ids=None):
-        """
-        Extracts a sample of conversations or specific conversations based on their conversation IDs.
-
-        Parameters:
-        - n_samples (int): Number of random samples to extract. Ignored if `conversation_ids` is provided.
-        - conversation_ids (list): List of conversation IDs to extract. If provided, this takes precedence over `n_samples`.
-
-        Returns:
-        - pd.DataFrame: A DataFrame containing the extracted conversations.
-        """
+    def extract_conversations(self, n_samples=None, conversation_ids=None):
         if conversation_ids:
             # Filter conversations based on the provided conversation IDs
             df_sample = self.lmsys_dataset['train'].to_pandas()
@@ -47,7 +35,7 @@ class DatasetWrapper:
             print(f"Retrieved {len(df_sample)} conversations based on specified IDs")
         else:
             # Randomly sample conversations if no IDs are provided
-            if not self.streaming:    
+            if not self.streaming:
                 df_sample = self.lmsys_dataset['train'].to_pandas().sample(n_samples)
                 print(f"Retrieved {len(df_sample)} random conversations from lmsys/lmsys-chat-1m")
             else:
