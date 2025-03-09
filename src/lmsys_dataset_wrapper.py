@@ -27,6 +27,16 @@ class DatasetWrapper:
         self.df_prompts = None
         self.unwrapped_turns_df = None
 
+    ### TODO ###
+    ########
+    def create_parquet_conversation_index(self):
+        pass
+    def extract_conversations_using_index(self):
+        pass
+    def extract_sample_conversations(self, n_samples):
+        pass
+
+
     def extract_conversations(self, n_samples=None, conversation_ids=None):
         if conversation_ids:
             # Filter conversations based on the provided conversation IDs
