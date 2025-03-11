@@ -24,7 +24,7 @@ __pycache__/
 *.xls
 # *.json
 # *.txt
-*.pkl
+# *.pkl
 *.pickle
 *.zip
 

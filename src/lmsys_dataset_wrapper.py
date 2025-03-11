@@ -17,20 +17,19 @@ class DatasetWrapper:
         self.dataset_name = dataset_name
         self.headers = {"Authorization": f"Bearer {self.hf_token}"}
         self.timeout = request_timeout
-        parquet_list_url = f"https://datasets-server.huggingface.co/parquet?dataset={self.dataset_name}"
-        response = requests.get(parquet_list_url, headers=self.headers)
-        if response.status_code != 200:
-            raise ValueError(f"Failed to retrieve parquet files. Status code: {response.status_code}")
-        # Extract URLs from the response JSON
-        self.parquet_urls = [file['url'] for file in response.json()['parquet_files']]
         self.verbose = verbose
-        if verbose:
-            print("\nParquet URLs:")
-            for url in self.parquet_urls:
-                print(url)
-                head_response = requests.head(url, allow_redirects=True, headers=self.headers)
-                file_size = int(head_response.headers['Content-Length'])
-                print(f"{url.split('/')[-1]}: {file_size} bytes")
+        parquet_list_url = f"https://datasets-server.huggingface.co/parquet?dataset={self.dataset_name}"
+        response = self._safe_get(parquet_list_url)
+        # Extract URLs from the response JSON
+        if response is not None:
+            self.parquet_urls = [file['url'] for file in response.json()['parquet_files']]
+            if self.verbose:
+                print("\nParquet URLs:")
+                for url in self.parquet_urls:
+                    print(url)
+                    head_response = self._safe_head(url)
+                    file_size = int(head_response.headers['Content-Length'])
+                    print(f"{url.split('/')[-1]}: {file_size} bytes")
 
         # Loading the index
         try:
@@ -44,12 +43,44 @@ class DatasetWrapper:
             with open(conversations_index, "r", encoding="utf-8") as f:
                 self.conversations_index = json.load(f)
 
-        self.active_df = None
-        self.active_conversation = None
+        # Initialize active conversation and DataFrame        
+        # Read from "pkl/cached_chats.pkl" if available:
+        try:
+            self.active_df = pd.read_pickle("pkl/cached_chats.pkl")
+            print(f"Loaded {len(self.active_df)} cached chats")
+            self.active_df = self.active_df.sample(frac=1).reset_index(drop=True)
+        except (FileNotFoundError, ValueError):
+            self.active_df = pd.DataFrame()
+            print("No cached chats found")
+        if not self.active_df.empty:
+            try:
+                self.active_conversation = Conversation(self.active_df.iloc[0])
+            except Exception as e:
+                print(f"No conversations available: {e}")
+        else:
+            self.active_conversation = None
 
     def _safe_get(self, url):
+        if self.timeout == 0:
+            print("Timeout is set to 0. Skipping GET request.")
+            return None
+        else:
+            try:
+                response = requests.get(url, headers=self.headers, timeout=self.timeout)
+                if response.status_code != 200:
+                    raise ValueError(f"Failed to retrieve {url}. Status code: {response.status_code}")
+                return response
+            except requests.exceptions.Timeout:
+                print(f"Timeout occurred for GET {url}. Skipping.")
+                return None
+            
+    def _safe_head(self, url):
+        if self.timeout == 0:
+            print("Timeout is set to 0. Skipping HEAD request.")
+            return None
         try:
-            return requests.get(url, headers=self.headers, timeout=self.timeout)
+            response = requests.head(url, allow_redirects=True, headers=self.headers, timeout=self.timeout)
+            return response
         except requests.exceptions.Timeout:
             print(f"Timeout occurred for GET {url}. Skipping.")
             return None
@@ -71,7 +102,7 @@ class DatasetWrapper:
             query_result = duckdb.query(f"SELECT * FROM read_parquet('{tmp_path}') USING SAMPLE {n_samples}").df()
             self.active_df = query_result
             try:
-                self.active_conversation = Conversation(query_result.conversation.iloc[0])
+                self.active_conversation = Conversation(query_result.iloc[0])
             except Exception as e:
                 print(f"No conversations available: {e}")
         finally:
@@ -104,7 +135,7 @@ class DatasetWrapper:
 
             try:
                 r = self._safe_get(file_url)
-                if r is None:
+                if r == None:
                     print(f"Timeout occurred for GET {file_url}. Skipping file {file_name}.")
                     continue
 
@@ -128,10 +159,10 @@ class DatasetWrapper:
 
             except Exception as e:
                 print(f"Error processing {file_name}: {e}")
-        self.active_df = result_df
 
+        self.active_df = result_df
         try:
-            self.active_conversation = Conversation(self.active_df.conversation.iloc[0])
+            self.active_conversation = Conversation(self.active_df.iloc[0])
         except Exception as e:
             print(f"No conversations available: {e}")
 
@@ -146,7 +177,7 @@ class DatasetWrapper:
         for url in urls:
             print(f"Querying file: {url}")
             r = self._safe_get(url)
-            if r is None:
+            if r == None:
                 print(f"Timeout occurred for GET {url}. Skipping file {url}.")
                 continue
             with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
@@ -173,7 +204,7 @@ class DatasetWrapper:
 
         self.active_df = result_df
         try:
-            self.active_conversation = Conversation(self.active_df.conversation.iloc[0])
+            self.active_conversation = Conversation(self.active_df.iloc[0])
         except Exception as e:
             print(f"No conversations available: {e}")
         return result_df
@@ -218,14 +249,26 @@ class DatasetWrapper:
 
 
 class Conversation:
-    def __init__(self, conversation_data):
+    def __init__(self, data):
         """
-        Initializes the Conversation object with the conversation data.
-
+        Initialize a conversation object either from conversation data directly or from a DataFrame row.
+        
         Parameters:
-        - conversation_data (list): A list of dictionaries representing a conversation.
+        - data: Can be either a list of conversation messages or a pandas Series/dict containing conversation data
         """
-        self.conversation_data = conversation_data
+        # Handle both direct conversation data and DataFrame row
+        if isinstance(data, (pd.Series, dict)):
+            # Store all metadata separately
+            self.conversation_metadata = {}
+            for key, value in (data.items() if isinstance(data, pd.Series) else data.items()):
+                if key == 'conversation':
+                    self.conversation_data = value
+                else:
+                    self.conversation_metadata[key] = value
+        else:
+            # Direct initialization with conversation data
+            self.conversation_data = data
+            self.conversation_metadata = {}
 
     def add_turns(self):
         """
