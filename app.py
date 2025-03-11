@@ -34,5 +34,6 @@ def display_conversation(conversation):
 # Display Initial Active Conversation
 st.write("---")
 if wrapper.active_conversation:
-    st.text(f"Conversation Preview (ID: {wrapper.active_conversation.conversation_id}):")
+    st.text(f"Conversation ID: {wrapper.active_conversation.conversation_metadata.get('conversation_id')}:")
+    st.text(f"Model: {wrapper.active_conversation.conversation_metadata.get('model')}:")
     display_conversation(wrapper.active_conversation)
