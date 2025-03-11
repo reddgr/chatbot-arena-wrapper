@@ -2,7 +2,9 @@ import os
 import pandas as pd
 import textwrap
 import random
+import duckdb
 import requests
+import tempfile
 from datasets import load_dataset
 from IPython.display import display
 
@@ -17,15 +19,32 @@ class DatasetWrapper:
         if response.status_code != 200:
             raise ValueError(f"Failed to retrieve parquet files. Status code: {response.status_code}")
         # Extract URLs from the response JSON
-        parquet_urls = [file['url'] for file in response.json()['parquet_files']]
+        self.parquet_urls = [file['url'] for file in response.json()['parquet_files']]
         self.verbose = verbose
         if verbose:
             print("\nParquet URLs:")
-            for url in parquet_urls:
+            for url in self.parquet_urls:
                 print(url)
+                head_response = requests.head(url, allow_redirects=True, headers=self.headers)
+                file_size = int(head_response.headers['Content-Length'])
+                print(f"{url.split('/')[-1]}: {file_size} bytes")
         self.df_sample = None
         self.df_prompts = None
         self.unwrapped_turns_df = None
+
+    def extract_sample_conversations(self, n_samples):
+        url = random.choice(self.parquet_urls)
+        print(url)
+        # Download file with auth headers using requests
+        r = requests.get(url, headers=self.headers)
+        # Write the downloaded content into a temporary file
+        with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
+            tmp.write(r.content)
+            tmp_path = tmp.name
+        # Query using DuckDB from the temporary file
+        query_result = duckdb.query(f"SELECT * FROM read_parquet('{tmp_path}') USING SAMPLE {n_samples}").df()
+        self.df_sample = query_result
+        return query_result
 
     ### TODO ###
     ########
@@ -33,8 +52,7 @@ class DatasetWrapper:
         pass
     def extract_conversations_using_index(self):
         pass
-    def extract_sample_conversations(self, n_samples):
-        pass
+
 
 
     def extract_conversations(self, n_samples=None, conversation_ids=None):
