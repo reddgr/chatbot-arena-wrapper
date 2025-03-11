@@ -18,20 +18,10 @@ st.title("Chatbot Arena Dataset Explorer")
 
 # Initialize DatasetWrapper
 wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
-initial_sample = wrapper.extract_sample_conversations(50)
 
 # Display Active Dataframe with Pagination
 st.write(f"{len(wrapper.active_df)} conversations loaded")
-
-# Pagination
-page_size = 5
-total_pages = (len(wrapper.active_df) + page_size - 1) // page_size
-page_number = st.number_input('Page Number', min_value=1, max_value=total_pages, value=1)
-
-start_idx = (page_number - 1) * page_size
-end_idx = start_idx + page_size
-st.dataframe(wrapper.active_df.iloc[start_idx:end_idx])
-
+st.dataframe(wrapper.active_df.head(5))
 
 # Function to Display Conversation in Streamlit
 def display_conversation(conversation):

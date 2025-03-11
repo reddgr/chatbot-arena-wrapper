@@ -12,11 +12,12 @@ from collections import defaultdict
 
 class DatasetWrapper:
     def __init__(self, hf_token, dataset_name="lmsys/lmsys-chat-1m", verbose=True, 
-                 conversations_index="json/conversations_index.json", request_timeout=20):
+                 conversations_index="json/conversations_index.json", cache_size=50, request_timeout=20):
         self.hf_token = hf_token
         self.dataset_name = dataset_name
         self.headers = {"Authorization": f"Bearer {self.hf_token}"}
         self.timeout = request_timeout
+        self.cache_size = cache_size
         self.verbose = verbose
         parquet_list_url = f"https://datasets-server.huggingface.co/parquet?dataset={self.dataset_name}"
         response = self._safe_get(parquet_list_url)
@@ -48,7 +49,7 @@ class DatasetWrapper:
         try:
             self.active_df = pd.read_pickle("pkl/cached_chats.pkl")
             print(f"Loaded {len(self.active_df)} cached chats")
-            self.active_df = self.active_df.sample(frac=1).reset_index(drop=True)
+            self.active_df = self.active_df.sample(self.cache_size).reset_index(drop=True)
         except (FileNotFoundError, ValueError):
             self.active_df = pd.DataFrame()
             print("No cached chats found")
