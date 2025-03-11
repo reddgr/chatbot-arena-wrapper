@@ -10,27 +10,46 @@ sys.path.append("./src")
 import env_options
 import lmsys_dataset_wrapper as lmsys
 
-dotenv_path = "../../apis/.env"
-hf_token, hf_token_write = env_options.check_env(colab=False, use_dotenv=True, dotenv_path=dotenv_path)
-
 # Streamlit App Title
 st.title("Chatbot Arena Dataset Explorer")
 
-# Initialize DatasetWrapper
-wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
-initial_sample = wrapper.extract_sample_conversations(50)
+dotenv_path = "../../apis/.env"
+hf_token, hf_token_write = env_options.check_env(use_dotenv=True, dotenv_path=dotenv_path)
+
+# Show a loading spinner while initializing DatasetWrapper
+with st.spinner('Loading...'):
+    wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
+    initial_sample = wrapper.extract_sample_conversations(50)
 
 # Display Active Dataframe with Pagination
 st.write(f"{len(wrapper.active_df)} conversations loaded")
 
-# Pagination
+# Display Dataframe with Pagination
 page_size = 5
 total_pages = (len(wrapper.active_df) + page_size - 1) // page_size
-page_number = st.number_input('Page Number', min_value=1, max_value=total_pages, value=1)
 
+if 'page_number' not in st.session_state:
+    st.session_state.page_number = 1
+
+page_number = st.session_state.page_number
 start_idx = (page_number - 1) * page_size
 end_idx = start_idx + page_size
 st.dataframe(wrapper.active_df.iloc[start_idx:end_idx])
+
+# Pagination with Buttons
+col1, col2, col3 = st.columns([1, 2, 1])
+
+with col1:
+    if st.button('Previous page'):
+        if st.session_state.page_number > 1:
+            st.session_state.page_number -= 1
+
+with col3:
+    if st.button('Next page'):
+        if st.session_state.page_number < total_pages:
+            st.session_state.page_number += 1
+
+st.write(f"Page {page_number} of {total_pages}")
 
 
 # Function to Display Conversation in Streamlit
