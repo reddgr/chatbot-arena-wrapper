@@ -14,7 +14,7 @@ def display_conversation(conversation):
             st.markdown(f"🤖 {message['content']}")
 
 # Streamlit App Title
-st.title("Chatbot Arena Dataset Explorer")
+# st.title("Chatbot Arena Dataset Explorer")
 
 dotenv_path = "../../apis/.env"
 
@@ -24,7 +24,7 @@ if "wrapper" not in st.session_state:
 
     with st.spinner('Loading...'):
         st.session_state.wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
-        st.session_state.initial_sample = st.session_state.wrapper.extract_sample_conversations(50)
+        # st.session_state.initial_sample = st.session_state.wrapper.extract_sample_conversations(50)
 
     st.session_state.page_number = 1  # Initialize page state
 
@@ -46,22 +46,44 @@ end_idx = start_idx + page_size
 
 # Replace the st.dataframe call with st.data_editor to enable row selection
 df_display = wrapper.active_df.iloc[start_idx:end_idx].copy()
-df_display["select"] = False  # Add a selection column to capture row clicks
+df_display["select"] = False
+if len(df_display) > 0:
+    df_display.loc[df_display.index[0], "select"] = True  # Set first row's select to True
 df_display = df_display[["select", "conversation_id", "conversation", "model"]]
 
-edited_df = st.data_editor(df_display, key="data_editor", num_rows="dynamic")
 
-# Check for any selected row and update the active conversation if one is found
-selected_rows = edited_df[edited_df["select"] == True]
-if not selected_rows.empty:
-    selected_idx = selected_rows.index[0]
-    st.session_state.wrapper.active_conversation = lmsys.Conversation(wrapper.active_df.iloc[selected_idx])
-    st.write("---")
-    st.text(f"Conversation ID: {wrapper.active_conversation.conversation_metadata.get('conversation_id')}:")
-    st.text(f"Model: {wrapper.active_conversation.conversation_metadata.get('model')}:")
-    display_conversation(wrapper.active_conversation)
+# Create columns for radio buttons and table
+radio_col, table_col = st.columns([1, 3])
 
-# Pagination with Buttons
+# Get the slice of the active dataframe for the current page
+current_rows = wrapper.active_df.iloc[start_idx:end_idx]
+
+# Add radio buttons in the left column
+with radio_col:
+    st.markdown("<br>", unsafe_allow_html=True)  # Add spacing to align with table header
+    
+    # Create a radio button for each row in the current page
+    selected_index = st.radio(
+        "Select a conversation",
+        options=current_rows.index.tolist(),
+        format_func=lambda x: f"",  # Empty label to reduce space
+        key="conversation_selector",
+        horizontal=False,
+        label_visibility="collapsed"
+    )
+
+    # Set the active conversation based on radio selection
+    if selected_index is not None:
+        st.session_state.wrapper.active_conversation = lmsys.Conversation(wrapper.active_df.iloc[selected_index])
+
+# Remove the select column from display for the table
+df_display = df_display[["conversation_id", "conversation", "model"]]
+
+# Display the table in the right column
+with table_col:
+    edited_df = st.data_editor(df_display, key="data_editor", num_rows="dynamic")
+
+# Pagination with Buttons (below both elements)
 col1, col2, col3 = st.columns([1, 2, 1])
 
 with col1:
@@ -74,9 +96,23 @@ with col3:
 
 st.write(f"Page {st.session_state.page_number} of {total_pages}")
 
-# Display Initial Active Conversation
+# Display Active Conversation
 st.write("---")
-if wrapper.active_conversation:
+
+
+st.text(f"Conversation ID: {wrapper.active_conversation.conversation_metadata.get('conversation_id')}:")
+st.text(f"Model: {wrapper.active_conversation.conversation_metadata.get('model')}:")
+display_conversation(wrapper.active_conversation)
+
+# Check for any selected row and update the active conversation if one is found
+
+
+'''
+selected_rows = edited_df[edited_df["select"] == True]
+if not selected_rows.empty:
+    selected_idx = selected_rows.index[0]
+    st.session_state.wrapper.active_conversation = lmsys.Conversation(wrapper.active_df.iloc[selected_idx])
     st.text(f"Conversation ID: {wrapper.active_conversation.conversation_metadata.get('conversation_id')}:")
     st.text(f"Model: {wrapper.active_conversation.conversation_metadata.get('model')}:")
     display_conversation(wrapper.active_conversation)
+'''
