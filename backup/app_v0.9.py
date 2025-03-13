@@ -6,7 +6,13 @@ import env_options
 import lmsys_dataset_wrapper as lmsys
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
 
-st.set_page_config(layout="wide")  # Set base layout to wide
+# Function to Display Conversation in Streamlit
+def display_conversation(conversation):
+    for message in conversation.conversation_data:
+        if message['role'] == 'user':
+            st.markdown(f"😎 {message['content']}")
+        elif message['role'] == 'assistant':
+            st.markdown(f"🤖 {message['content']}")
 
 # Streamlit App Title
 # st.title("Chatbot Arena Dataset Explorer")
@@ -41,21 +47,7 @@ end_idx = start_idx + page_size
 
 # Replace the st.dataframe call with st.data_editor to enable row selection
 df_display = wrapper.active_df.iloc[start_idx:end_idx].copy()
-
-# Extract the first message content from each conversation as preview
-df_display["Prompt preview"] = df_display.apply(
-    lambda row: row.conversation[0].get("content", "")[:100] + "..." 
-    if len(row.conversation) > 0 else "No content", 
-    axis=1
-)
-df_display["Response preview"] = df_display.apply(
-    lambda row: row.conversation[1].get("content", "")[:100] + "..." 
-    if len(row.conversation) > 0 else "No content", 
-    axis=1
-)
-
-df_display = df_display[["conversation_id", "Prompt preview", "Response preview", "model", "language", "turn", "conversation"]]
-df_display = df_display.rename(columns={"turn": "n_turns"})
+df_display = df_display[["conversation_id", "conversation", "model"]]
 
 df_display["select"] = False
 if len(df_display) > 0:
@@ -68,43 +60,22 @@ gb = GridOptionsBuilder.from_dataframe(df_display)
 gb.configure_selection(selection_mode='single', use_checkbox=True, pre_selected_rows=[0])  # First row selected by default
 gb.configure_column("select", hide=True)  # Hide the select column as we're using checkbox selection
 gb.configure_column("conversation", hide=True)  # Hide the conversation object column
-gb.configure_column("Prompt preview", header_name="Prompt preview")
-gb.configure_column("Response preview", header_name="Response preview")
 gb.configure_column("conversation_id", header_name="Conversation ID")
 gb.configure_column("model", header_name="Model")
-gb.configure_column("language", header_name="Language")
-gb.configure_column("n_turns", header_name="Number of turns")
 gb.configure_grid_options(domLayout='normal')
 
 grid_options = gb.build()
-# Set auto-size for specific columns but fixed width for conv_preview
-grid_options['columnDefs'] = [
-    {'field': 'select', 'headerCheckboxSelection': True, 'checkboxSelection': True, 'width': 30},
-    {'field': 'conversation_id', 'width': 140},
-    {'field': 'Prompt preview', 'width': 300}, 
-    {'field': 'Response preview', 'width': 300}, 
-    {'field': 'model', 'width': 70},
-    {'field': 'language', 'width': 55},
-    {'field': 'n_turns', 'width': 45}
-]
-
 grid_response = AgGrid(
     df_display,
     gridOptions=grid_options,
     update_mode=GridUpdateMode.SELECTION_CHANGED,
     fit_columns_on_grid_load=True,
-    height=200,
-    allow_unsafe_jscode=True
+    height=300
 )
 
 # Get the selected rows from AgGrid
 selected_rows = grid_response["selected_rows"]
 print(f"Traza: {selected_rows} - {type(selected_rows)}")
-
-# Ensure that a row is always selected
-if (selected_rows is None or len(selected_rows) == 0) and len(df_display) > 0:
-    selected_rows = df_display.iloc[[0]]  # Force selection of the first row
-
 
 # Store edited dataframe for reference
 edited_df = grid_response["data"]
@@ -121,14 +92,6 @@ with col3:
         st.session_state.page_number += 1
 
 st.write(f"Page {st.session_state.page_number} of {total_pages}")
-
-# Function to Display Conversation in Streamlit
-def display_conversation(conversation):
-    for message in conversation.conversation_data:
-        if message['role'] == 'user':
-            st.markdown(f"😎 {message['content']}")
-        elif message['role'] == 'assistant':
-            st.markdown(f"🤖 {message['content']}")
 
 if len(selected_rows) > 0:
     selected_row = selected_rows.iloc[0]  # Get the "first selected row" (there's only one, but it's a DataFrame)
