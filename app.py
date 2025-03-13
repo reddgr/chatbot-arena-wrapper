@@ -57,29 +57,28 @@ df_display["Response preview"] = df_display.apply(
 df_display = df_display[["conversation_id", "Prompt preview", "Response preview", "model", "language", "turn", "conversation"]]
 df_display = df_display.rename(columns={"turn": "n_turns"})
 
-df_display["select"] = False
-if len(df_display) > 0:
-    df_display.loc[df_display.index[0], "select"] = True  # Set first row's select to True
+#df_display["select"] = False
+#if len(df_display) > 0:
+#    df_display.loc[df_display.index[0], "select"] = True  # Set first row's select to True
 
 
 # edited_df = st.data_editor(df_display, key="data_editor", num_rows="dynamic")
 # Configure and display the AgGrid
 gb = GridOptionsBuilder.from_dataframe(df_display)
 gb.configure_selection(selection_mode='single', use_checkbox=True, pre_selected_rows=[0])  # First row selected by default
-gb.configure_column("select", hide=True)  # Hide the select column as we're using checkbox selection
+#gb.configure_column("select", hide=True)  # Hide the select column as we're using checkbox selection
 gb.configure_column("conversation", hide=True)  # Hide the conversation object column
 gb.configure_column("Prompt preview", header_name="Prompt preview")
 gb.configure_column("Response preview", header_name="Response preview")
 gb.configure_column("conversation_id", header_name="Conversation ID")
-gb.configure_column("model", header_name="Model")
-gb.configure_column("language", header_name="Language")
-gb.configure_column("n_turns", header_name="Number of turns")
+gb.configure_column("Model", header_name="Model")
+gb.configure_column("Language", header_name="Language")
+gb.configure_column("Turns", header_name="Number of turns")
 gb.configure_grid_options(domLayout='normal')
 
 grid_options = gb.build()
-# Set auto-size for specific columns but fixed width for conv_preview
 grid_options['columnDefs'] = [
-    {'field': 'select', 'headerCheckboxSelection': True, 'checkboxSelection': True, 'width': 30},
+    {'field': 'View', 'headerCheckboxSelection': True, 'checkboxSelection': True, 'width': 50},
     {'field': 'conversation_id', 'width': 140},
     {'field': 'Prompt preview', 'width': 300}, 
     {'field': 'Response preview', 'width': 300}, 
@@ -109,18 +108,22 @@ if (selected_rows is None or len(selected_rows) == 0) and len(df_display) > 0:
 # Store edited dataframe for reference
 edited_df = grid_response["data"]
 
-# Pagination with Buttons (below both elements)
-col1, col2, col3 = st.columns([1, 2, 1])
+# Pagination with Buttons placed next to each other in a narrower layout
+col1, col2 = st.columns([2, 8])  # Make the pagination area narrower by adjusting ratio
 
 with col1:
-    if st.button('Previous page') and page_number > 1:
-        st.session_state.page_number -= 1
-
-with col3:
-    if st.button('Next page') and page_number < total_pages:
-        st.session_state.page_number += 1
-
-st.write(f"Page {st.session_state.page_number} of {total_pages}")
+    col_layout = st.columns([1.1, 1.2, 1])  # Make pagination buttons more compact
+    
+    with col_layout[0]:
+        if st.button('Previous', use_container_width=True) and page_number > 1:
+            st.session_state.page_number -= 1
+    
+    with col_layout[1]:
+        st.markdown(f"<div style='text-align: center'>Page {st.session_state.page_number} of {total_pages}</div>", unsafe_allow_html=True)
+    
+    with col_layout[2]:
+        if st.button('Next', use_container_width=True) and page_number < total_pages:
+            st.session_state.page_number += 1
 
 # Function to Display Conversation in Streamlit
 def display_conversation(conversation):
@@ -133,17 +136,49 @@ def display_conversation(conversation):
 if len(selected_rows) > 0:
     selected_row = selected_rows.iloc[0]  # Get the "first selected row" (there's only one, but it's a DataFrame)
     conversation_id = selected_row["conversation_id"]  # Extract the conversation ID
-    
-    # Find the corresponding row in the original dataframe using the conversation ID
     conversation_row = wrapper.active_df.loc[wrapper.active_df["conversation_id"] == conversation_id].iloc[0]
-
-    # Create Conversation object from the selected row
     st.session_state.wrapper.active_conversation = lmsys.Conversation(conversation_row)
 
+    # Literal text search
     st.write("---")
-    model_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('model')
-    id_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('conversation_id')
-    st.text(f"Model: {model_print} | Conversation ID: {id_print}")
+    # Create a layout for search input and button
+    search_col1, search_col2 = st.columns([3, 1])
+
+    with search_col1:
+        search_text = st.text_input(
+        "Search conversations", 
+        key="search_box",
+        label_visibility="collapsed",
+        placeholder="Enter search text..."
+        )
+
+    with search_col2:
+        search_button = st.button("Search", key="search_button")
+
+    if search_button and search_text:
+        with st.spinner('Searching...'):
+            wrapper.literal_text_search(filter_str=search_text, min_results=6)
+            st.session_state.page_number = 1
+            st.rerun()
+
+    st.write("---")
+
+    col1, col2 = st.columns([2, 1])
     
-    # Display the conversation
-    display_conversation(st.session_state.wrapper.active_conversation)
+    with col1:
+        display_conversation(st.session_state.wrapper.active_conversation)
+    
+    with col2:
+        model_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('model', 'Unknown')
+        id_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('conversation_id', 'Unknown')
+        table_data = {"Attribute": ["Model", "Conversation ID"], "Value": [model_print, id_print]}
+        st.table(table_data)
+
+        # additional elements
+        st.write("---")
+
+
+
+
+
+
