@@ -167,8 +167,15 @@ if len(selected_rows) > 0:
         with col2:
             model_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('model', 'Unknown')
             id_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('conversation_id', 'Unknown')
-            table_data = {"Attribute": ["Model", "Conversation ID"], "Value": [model_print, id_print]}
-            st.table(table_data)
+            lang_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('language', 'Unknown')
+            turns_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('turn', 'Unknown')
+            redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
+            st.markdown("### Chat Metadata")
+            st.markdown(f"**Conversation ID:** {id_print}  \n"
+                       f"**Model:** {model_print}  \n"
+                       f"**Language:** {lang_print}  \n"
+                       f"**Turns:** {turns_print}  \n"
+                       f"**Redacted:** {redacted_print}")
 
             # additional elements
             st.write("---")
