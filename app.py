@@ -73,19 +73,44 @@ def perform_search():
             wrapper.literal_text_search(filter_str=st.session_state.search_box, min_results=6)
             st.session_state.page_number = 1
 
-# Literal text search
-search_col1, search_col2, search_col3 = st.columns([3, 1, 3])
+def perform_id_filtering():
+    if st.session_state.id_retrieve_box:
+        with st.spinner('Searching...'):
+            # Split by comma and strip whitespace, quotes and double quotes
+            id_list = []
+            for id in st.session_state.id_retrieve_box.split(','):
+                stripped_id = id.strip().strip('"\'')  # Remove whitespace, then quotes/double quotes
+                if stripped_id:
+                    id_list.append(stripped_id)
+            
+            print(f"TRAZA: {id_list} - {type(id_list)}")
+            wrapper.extract_conversations(conversation_ids=id_list)
+            st.session_state.page_number = 1
+
+# Literal text search and ID filtering
+search_col1, search_col2, search_col3, search_col4 = st.columns([3, 1, 3, 1])
 
 with search_col1:
     search_text = st.text_input(
     "Search conversations", 
     key="search_box",
     label_visibility="collapsed",
-    placeholder="Enter search text..."
+    placeholder="Enter literal search text..."
     )
 
 with search_col2:
     search_button = st.button("Search", key="search_button", on_click=perform_search)
+
+with search_col3:
+    search_text = st.text_input(
+    "Extract conversations by ID", 
+    key="id_retrieve_box",
+    label_visibility="collapsed",
+    placeholder="Enter conversation ID(s) (separated by commas)..."
+    )
+
+with search_col4:
+    id_retrieve_button = st.button("Retrieve", key="id_retrieve_button", on_click=perform_id_filtering)
 
 # Configure and display the AgGrid
 gb = GridOptionsBuilder.from_dataframe(df_display)
