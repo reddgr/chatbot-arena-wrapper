@@ -82,8 +82,6 @@ def perform_id_filtering():
                 stripped_id = id.strip().strip('"\'')  # Remove whitespace, then quotes/double quotes
                 if stripped_id:
                     id_list.append(stripped_id)
-            
-            print(f"TRAZA: {id_list} - {type(id_list)}")
             wrapper.extract_conversations(conversation_ids=id_list)
             st.session_state.page_number = 1
 
@@ -185,16 +183,19 @@ if len(selected_rows) > 0:
         st.write("---")
 
         col1, col2 = st.columns([2, 1])
+
+        model_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('model', 'Unknown')
+        id_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('conversation_id', 'Unknown')
+        lang_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('language', 'Unknown')
+        turns_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('turn', 'Unknown')
+        redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
         
         with col1:
+            st.markdown(f"### Chat {id_print}")
             display_conversation(st.session_state.wrapper.active_conversation)
         
         with col2:
-            model_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('model', 'Unknown')
-            id_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('conversation_id', 'Unknown')
-            lang_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('language', 'Unknown')
-            turns_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('turn', 'Unknown')
-            redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
+
             st.markdown("### Chat Metadata")
             st.markdown(f"**Conversation ID:** {id_print}  \n"
                        f"**Model:** {model_print}  \n"
