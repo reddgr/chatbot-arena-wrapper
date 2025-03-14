@@ -115,6 +115,8 @@ with search_col3:
 with search_col4:
     id_retrieve_button = st.button("Retrieve", key="id_retrieve_button", on_click=perform_id_filtering)
 
+
+
 # Configure and display the AgGrid
 gb = GridOptionsBuilder.from_dataframe(df_display)
 gb.configure_selection(selection_mode='single', use_checkbox=True, pre_selected_rows=[0])  # First row selected by default
@@ -196,7 +198,7 @@ if len(selected_rows) > 0:
         redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
         
         with col1:
-            st.markdown(f"### Chat {id_print}")
+            st.markdown(f"### Chat")
             display_conversation(st.session_state.wrapper.active_conversation)
         
         with col2:
@@ -211,7 +213,7 @@ if len(selected_rows) > 0:
             # additional elements
             st.write("---")
 
-
+        
             # Suggested searches section
             st.markdown("### Suggested Searches")
             

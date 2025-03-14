@@ -85,6 +85,11 @@ def perform_id_filtering():
             wrapper.extract_conversations(conversation_ids=id_list)
             st.session_state.page_number = 1
 
+def set_suggested_search(search_text):
+    with st.spinner('Searching...'):
+        wrapper.literal_text_search(filter_str=search_text, min_results=6)
+        st.session_state.page_number = 1
+
 # Literal text search and ID filtering
 search_col1, search_col2, search_col3, search_col4 = st.columns([3, 1, 3, 1])
 
@@ -191,7 +196,7 @@ if len(selected_rows) > 0:
         redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
         
         with col1:
-            st.markdown(f"### Chat {id_print}")
+            st.markdown(f"### Chat")
             display_conversation(st.session_state.wrapper.active_conversation)
         
         with col2:
@@ -205,5 +210,23 @@ if len(selected_rows) > 0:
 
             # additional elements
             st.write("---")
+
+
+            # Suggested searches section
+            st.markdown("### Suggested Searches")
+            
+            # Define suggested searches
+            suggested_searches = [
+                "explain quantum physics",
+                "write a poem",
+                "tell me a joke",
+                "b00bz"
+            ]
+            
+            # Create clickable buttons for suggested searches
+            for search in suggested_searches:
+                if st.button(search, key=f"suggest_{search}"):
+                    set_suggested_search(search)
+
     except (IndexError, KeyError, AttributeError) as e:
         st.error(f"Error displaying conversation: {e}")
