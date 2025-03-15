@@ -143,7 +143,7 @@ grid_response = AgGrid(
     gridOptions=grid_options,
     update_mode=GridUpdateMode.SELECTION_CHANGED,
     fit_columns_on_grid_load=True,
-    height=200,
+    height=175,
     allow_unsafe_jscode=True
 )
 
@@ -155,10 +155,10 @@ if (selected_rows is None or len(selected_rows) == 0) and len(df_display) > 0:
     selected_rows = df_display.iloc[[0]]  # Force selection of the first row
 
 st.write(f"{len(wrapper.active_df)} conversations loaded")
-col1, col2 = st.columns([2, 8])
+col1, col2 = st.columns([2.4, 8])
 
 with col1:
-    col_layout = st.columns([1.1, 1.2, 1])  # Make pagination buttons more compact
+    col_layout = st.columns([1.4, 1.2, 1])
     
     with col_layout[0]:
         # Fix double-click issue by using on_click handlers that modify state directly
