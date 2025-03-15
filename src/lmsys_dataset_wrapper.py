@@ -170,6 +170,9 @@ class DatasetWrapper:
         return result_df
     
     def literal_text_search(self, filter_str, min_results=1):
+        # If filter_str is empty, sample random conversations
+        if filter_str == "":
+            result_df = self.extract_sample_conversations(50)
         urls = self.parquet_urls.copy()
         random.shuffle(urls)
         
@@ -188,7 +191,7 @@ class DatasetWrapper:
             try:
                 query_str = f"""
                     SELECT * FROM read_parquet('{tmp_path}') 
-                    WHERE contains(lower(cast(conversation as VARCHAR)), '{filter_str}')
+                    WHERE contains(lower(cast(conversation as VARCHAR)), lower('{filter_str}'))
                     """
                 df = duckdb.query(query_str).df()
             finally:

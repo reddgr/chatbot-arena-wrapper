@@ -85,6 +85,11 @@ def perform_id_filtering():
             wrapper.extract_conversations(conversation_ids=id_list)
             st.session_state.page_number = 1
 
+def perform_sampling():
+    with st.spinner('Retrieving random samples...'):
+        wrapper.extract_sample_conversations(1000)
+        st.session_state.page_number = 1
+
 def set_suggested_search(search_text, min_results=6):
     # Set the search box text to the suggested search term
     st.session_state.search_box = search_text
@@ -92,19 +97,20 @@ def set_suggested_search(search_text, min_results=6):
     perform_search(min_results=min_results)
 
 # Add quick search buttons at the top
-quick_searches = ["hhhhhhdsfshhhhhhhh", "tell me a joke about", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
-min_results_params = [1, 1, 1, 1, 1, 6]  # Minimum results to display for each quick search
-cols = st.columns([2] + [1] * len(quick_searches))  # First column wider for label
+quick_searches = ["think step by step", "tell me a joke about", "how old is my", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
+min_results_params = [1, 1, 1, 1, 2, 1, 6]  # Minimum results to display for each quick search
+col_widths = [2] + [2, 2, 2, 2, 2, 1.5, 1]
+cols = st.columns(col_widths)  # Use dynamic width values based on text length
 with cols[0]:
     st.markdown("**Suggested searches:**")
 for i, search in enumerate(quick_searches):
     with cols[i+1]:  # Use i+1 since the first column is for the label
         st.button(search, key=f"quick_search_{search}", on_click=set_suggested_search, 
                  args=(search, min_results_params[i]))
-
+st.write("---")
 
 # Literal text search and ID filtering
-search_col1, search_col2, search_col3, search_col4 = st.columns([3, 1, 3, 1])
+search_col1, search_col2, search_col3, search_col4, search_col5 = st.columns([3, 1, 1.5, 3, 1])
 
 with search_col1:
     search_text = st.text_input(
@@ -118,6 +124,9 @@ with search_col2:
     search_button = st.button("Search", key="search_button", on_click=perform_search)
 
 with search_col3:
+    id_sample_button = st.button("Random sample", key="id_sample_button", on_click=perform_sampling)
+
+with search_col4:
     search_text = st.text_input(
     "Extract conversations by ID", 
     key="id_retrieve_box",
@@ -125,7 +134,7 @@ with search_col3:
     placeholder="Enter conversation ID(s) (separated by commas)..."
     )
 
-with search_col4:
+with search_col5:
     id_retrieve_button = st.button("Retrieve", key="id_retrieve_button", on_click=perform_id_filtering)
 
 # Configure and display the AgGrid
