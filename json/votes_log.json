@@ -1,0 +1,22 @@
+{
+  "votes": [
+    {
+      "conversation_id": "f10a58ba8796475cadee1bf5327789b5",
+      "model": "llama-2-13b-chat",
+      "vote": "upvote",
+      "timestamp": "2025-03-15T23:42:07.853651"
+    },
+    {
+      "conversation_id": "2d429f21d7dd4be09f1653972c7ec0e9",
+      "model": "RWKV-4-Raven-14B",
+      "vote": "upvote",
+      "timestamp": "2025-03-15T23:43:02.797171"
+    },
+    {
+      "conversation_id": "382256512e914ed19771e23a4ee13237",
+      "model": "koala-13b",
+      "vote": "downvote",
+      "timestamp": "2025-03-15T23:43:34.163923"
+    }
+  ]
+}

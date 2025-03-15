@@ -5,6 +5,9 @@ sys.path.append("./src")
 import env_options
 import lmsys_dataset_wrapper as lmsys
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
+import json
+import os
+from datetime import datetime
 
 st.set_page_config(layout="wide")  # Set base layout to wide
 
@@ -232,6 +235,48 @@ if len(selected_rows) > 0:
 
             # additional elements
             st.write("---")
+
+            # Vote rating section
+            st.write("### Rate this Conversation")
+            vote_col1, vote_col2 = st.columns([1, 1])
+            
+            with vote_col1:
+                upvote = st.button("👍 Upvote")
+            
+            with vote_col2:
+                downvote = st.button("👎 Downvote")
+            
+            # Handle voting
+            if upvote or downvote:
+                
+                # Create votes directory if it doesn't exist
+                os.makedirs("json", exist_ok=True)
+                votes_file = "json/votes_log.json"
+                
+                # Prepare the vote data
+                vote_data = {
+                    "conversation_id": id_print,
+                    "model": model_print,
+                    "vote": "upvote" if upvote else "downvote",
+                    "timestamp": datetime.now().isoformat(),
+                }
+                
+                # Load existing votes or create new file
+                try:
+                    with open(votes_file, "r") as f:
+                        votes_log = json.load(f)
+                except (FileNotFoundError, json.JSONDecodeError):
+                    votes_log = {"votes": []}
+                
+                # Add new vote and save
+                votes_log["votes"].append(vote_data)
+                with open(votes_file, "w") as f:
+                    json.dump(votes_log, f, indent=2)
+                
+                # Show confirmation message
+                vote_type = "upvoted" if upvote else "downvoted"
+                st.success(f"You {vote_type} this conversation. Thank you for your feedback!")
+
 
     except (IndexError, KeyError, AttributeError) as e:
         st.error(f"Error displaying conversation: {e}")
