@@ -86,19 +86,9 @@ def perform_id_filtering():
             st.session_state.page_number = 1
 
 def set_suggested_search(search_text):
-    # Set the search box text to the suggested search term
-    st.session_state.search_box = search_text
-    # Perform the search using the same function as the search button
-    perform_search()
-
-# Add quick search buttons at the top
-quick_searches = ["joke", "b00bz"]
-cols = st.columns(len(quick_searches))
-for i, search in enumerate(quick_searches):
-    with cols[i]:
-        if st.button(search, key=f"quick_search_{search}"):
-            set_suggested_search(search)
-
+    with st.spinner('Searching...'):
+        wrapper.literal_text_search(filter_str=search_text, min_results=6)
+        st.session_state.page_number = 1
 
 # Literal text search and ID filtering
 search_col1, search_col2, search_col3, search_col4 = st.columns([3, 1, 3, 1])
@@ -153,7 +143,7 @@ grid_response = AgGrid(
     gridOptions=grid_options,
     update_mode=GridUpdateMode.SELECTION_CHANGED,
     fit_columns_on_grid_load=True,
-    height=175,
+    height=200,
     allow_unsafe_jscode=True
 )
 
@@ -165,10 +155,10 @@ if (selected_rows is None or len(selected_rows) == 0) and len(df_display) > 0:
     selected_rows = df_display.iloc[[0]]  # Force selection of the first row
 
 st.write(f"{len(wrapper.active_df)} conversations loaded")
-col1, col2 = st.columns([2.4, 8])
+col1, col2 = st.columns([2, 8])
 
 with col1:
-    col_layout = st.columns([1.4, 1.2, 1])
+    col_layout = st.columns([1.1, 1.2, 1])  # Make pagination buttons more compact
     
     with col_layout[0]:
         # Fix double-click issue by using on_click handlers that modify state directly
@@ -206,7 +196,7 @@ if len(selected_rows) > 0:
         redacted_print = st.session_state.wrapper.active_conversation.conversation_metadata.get('redacted', 'Unknown')
         
         with col1:
-            st.markdown(f"### Chat")
+            st.markdown(f"### Chat {id_print}")
             display_conversation(st.session_state.wrapper.active_conversation)
         
         with col2:
@@ -221,7 +211,7 @@ if len(selected_rows) > 0:
             # additional elements
             st.write("---")
 
-            '''
+
             # Suggested searches section
             st.markdown("### Suggested Searches")
             
@@ -229,15 +219,13 @@ if len(selected_rows) > 0:
             suggested_searches = [
                 "explain quantum physics",
                 "write a poem",
-                "tell me a joke",
-                "b00bz"
+                "tell me a joke"
             ]
             
             # Create clickable buttons for suggested searches
             for search in suggested_searches:
                 if st.button(search, key=f"suggest_{search}"):
-                    set_suggested_search(search)'
-            '''
+                    set_suggested_search(search)
 
     except (IndexError, KeyError, AttributeError) as e:
         st.error(f"Error displaying conversation: {e}")

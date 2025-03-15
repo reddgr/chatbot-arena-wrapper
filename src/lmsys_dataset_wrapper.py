@@ -202,7 +202,20 @@ class DatasetWrapper:
                 
             if len(result_df) >= min_results:
                 break
-
+        if len(result_df) == 0:
+            print("No results found. Returning empty DataFrame.")
+            placeholder_row = {'conversation_id': "No result found",
+                               'model': "-",
+                               'conversation': [
+                                {'content': '-', 'role': 'user'},
+                                {'content': '-', 'role': 'assistant'}
+                               ],
+                               'turn': "-",
+                               'language': "-",
+                               'openai_moderation': "[{'-': '-', '-': '-'}]",
+                               'redacted': "-",}
+            result_df = pd.DataFrame([placeholder_row])
+            print(result_df)
         self.active_df = result_df
         try:
             self.active_conversation = Conversation(self.active_df.iloc[0])

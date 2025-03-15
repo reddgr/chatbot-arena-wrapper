@@ -67,10 +67,10 @@ def go_to_previous_page():
     if st.session_state.page_number > 1:
         st.session_state.page_number -= 1
 
-def perform_search():
+def perform_search(min_results=6):
     if st.session_state.search_box:
         with st.spinner('Searching...'):
-            wrapper.literal_text_search(filter_str=st.session_state.search_box, min_results=6)
+            wrapper.literal_text_search(filter_str=st.session_state.search_box, min_results=min_results)
             st.session_state.page_number = 1
 
 def perform_id_filtering():
@@ -85,19 +85,22 @@ def perform_id_filtering():
             wrapper.extract_conversations(conversation_ids=id_list)
             st.session_state.page_number = 1
 
-def set_suggested_search(search_text):
+def set_suggested_search(search_text, min_results=6):
     # Set the search box text to the suggested search term
     st.session_state.search_box = search_text
     # Perform the search using the same function as the search button
-    perform_search()
+    perform_search(min_results=min_results)
 
 # Add quick search buttons at the top
-quick_searches = ["joke", "b00bz"]
-cols = st.columns(len(quick_searches))
+quick_searches = ["hhhhhhdsfshhhhhhhh", "tell me a joke about", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
+min_results_params = [1, 1, 1, 1, 1, 6]  # Minimum results to display for each quick search
+cols = st.columns([2] + [1] * len(quick_searches))  # First column wider for label
+with cols[0]:
+    st.markdown("**Suggested searches:**")
 for i, search in enumerate(quick_searches):
-    with cols[i]:
-        if st.button(search, key=f"quick_search_{search}"):
-            set_suggested_search(search)
+    with cols[i+1]:  # Use i+1 since the first column is for the label
+        st.button(search, key=f"quick_search_{search}", on_click=set_suggested_search, 
+                 args=(search, min_results_params[i]))
 
 
 # Literal text search and ID filtering
@@ -220,23 +223,6 @@ if len(selected_rows) > 0:
 
             # additional elements
             st.write("---")
-
-
-            # Suggested searches section
-            st.markdown("### Suggested Searches")
-            
-            # Define suggested searches
-            suggested_searches = [
-                "explain quantum physics",
-                "write a poem",
-                "tell me a joke",
-                "b00bz"
-            ]
-            
-            # Create clickable buttons for suggested searches
-            for search in suggested_searches:
-                if st.button(search, key=f"suggest_{search}"):
-                    set_suggested_search(search)
 
     except (IndexError, KeyError, AttributeError) as e:
         st.error(f"Error displaying conversation: {e}")
