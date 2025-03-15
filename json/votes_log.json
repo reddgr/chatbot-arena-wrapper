@@ -17,6 +17,12 @@
       "model": "koala-13b",
       "vote": "downvote",
       "timestamp": "2025-03-15T23:43:34.163923"
+    },
+    {
+      "conversation_id": "d456109de2294fe9bf93aca99d4be5e6",
+      "model": "claude-1",
+      "vote": "downvote",
+      "timestamp": "2025-03-15T23:55:53.771879"
     }
   ]
 }

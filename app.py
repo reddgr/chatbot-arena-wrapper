@@ -2,6 +2,8 @@ import streamlit as st
 import sys
 
 sys.path.append("./src")
+use_dotenv = True
+dotenv_path = "../../apis/.env"
 import env_options
 import lmsys_dataset_wrapper as lmsys
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode, JsCode
@@ -9,16 +11,16 @@ import json
 import os
 from datetime import datetime
 
+
 st.set_page_config(layout="wide")  # Set base layout to wide
 
-# Streamlit App Title
-# st.title("Chatbot Arena Dataset Explorer")
-
-dotenv_path = "../../apis/.env"
+# Streamlit App Header - smaller than title
+st.header("Chatbot Arena Dataset Wrapper")
+st.write("---")
 
 # Initialize session state for dataset only if not already loaded
 if "wrapper" not in st.session_state:
-    hf_token, hf_token_write = env_options.check_env(use_dotenv=True, dotenv_path=dotenv_path)
+    hf_token, hf_token_write = env_options.check_env(use_dotenv=use_dotenv, dotenv_path=dotenv_path)
 
     with st.spinner('Loading...'):
         st.session_state.wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
@@ -110,7 +112,6 @@ for i, search in enumerate(quick_searches):
     with cols[i+1]:  # Use i+1 since the first column is for the label
         st.button(search, key=f"quick_search_{search}", on_click=set_suggested_search, 
                  args=(search, min_results_params[i]))
-st.write("---")
 
 # Literal text search and ID filtering
 search_col1, search_col2, search_col3, search_col4, search_col5 = st.columns([3, 1, 1.5, 3, 1])
@@ -276,6 +277,16 @@ if len(selected_rows) > 0:
                 # Show confirmation message
                 vote_type = "upvoted" if upvote else "downvoted"
                 st.success(f"You {vote_type} this conversation. Thank you for your feedback!")
+
+        # Footer
+        st.write("---")
+        st.markdown(
+            """<div style='text-align: center; color: gray; font-size: 16px;'>
+            © 2025 <a href='https://talkingtochatbots.com' target='_blank'>TalkingToChatbots.com (TTCB)</a>, by Reddgr
+            </div>""", 
+            unsafe_allow_html=True
+        )
+
 
 
     except (IndexError, KeyError, AttributeError) as e:
