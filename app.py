@@ -86,9 +86,19 @@ def perform_id_filtering():
             st.session_state.page_number = 1
 
 def set_suggested_search(search_text):
-    with st.spinner('Searching...'):
-        wrapper.literal_text_search(filter_str=search_text, min_results=6)
-        st.session_state.page_number = 1
+    # Set the search box text to the suggested search term
+    st.session_state.search_box = search_text
+    # Perform the search using the same function as the search button
+    perform_search()
+
+# Add quick search buttons at the top
+quick_searches = ["joke", "b00bz"]
+cols = st.columns(len(quick_searches))
+for i, search in enumerate(quick_searches):
+    with cols[i]:
+        if st.button(search, key=f"quick_search_{search}"):
+            set_suggested_search(search)
+
 
 # Literal text search and ID filtering
 search_col1, search_col2, search_col3, search_col4 = st.columns([3, 1, 3, 1])
