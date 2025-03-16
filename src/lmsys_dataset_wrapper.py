@@ -47,7 +47,7 @@ class DatasetWrapper:
         # Initialize active conversation and DataFrame        
         # Read from "pkl/cached_chats.pkl" if available:
         try:
-            self.active_df = pd.read_pickle("pkl/cached_chats.pkl")
+            self.active_df = pd.read_pickle("../pkl/cached_chats.pkl")
             print(f"Loaded {len(self.active_df)} cached chats")
             self.active_df = self.active_df.sample(self.cache_size).reset_index(drop=True)
         except (FileNotFoundError, ValueError):
