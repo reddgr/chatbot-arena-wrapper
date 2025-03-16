@@ -2,7 +2,7 @@ import streamlit as st
 import sys
 
 sys.path.append("./src")
-use_dotenv = True
+use_dotenv = False
 dotenv_path = "../../apis/.env"
 import env_options
 import lmsys_dataset_wrapper as lmsys
@@ -11,16 +11,17 @@ import json
 import os
 from datetime import datetime
 
-
-st.set_page_config(layout="wide")  # Set base layout to wide
+st.set_page_config(layout="wide")
 
 # Streamlit App Header - smaller than title
 st.header("Chatbot Arena Dataset Wrapper")
+st.write("Browse 1 million chatbot conversations from lmsys/lmsys-chat-1m. Filter by literal text, UUIDs, or just explore random conversations. \
+         Upvote/downvote chats and contribute crowdsourcing a dataset with the best LLM prompts.")
 st.write("---")
 
 # Initialize session state for dataset only if not already loaded
 if "wrapper" not in st.session_state:
-    hf_token, hf_token_write = env_options.check_env(use_dotenv=use_dotenv, dotenv_path=dotenv_path)
+    hf_token, hf_token_write, openai_api_key = env_options.check_env(use_dotenv=use_dotenv, dotenv_path=dotenv_path)
 
     with st.spinner('Loading...'):
         st.session_state.wrapper = lmsys.DatasetWrapper(hf_token, request_timeout=10)
@@ -92,7 +93,7 @@ def perform_id_filtering():
 
 def perform_sampling():
     with st.spinner('Retrieving random samples...'):
-        wrapper.extract_sample_conversations(1000)
+        wrapper.extract_sample_conversations(210)
         st.session_state.page_number = 1
 
 def set_suggested_search(search_text, min_results=6):
@@ -102,10 +103,10 @@ def set_suggested_search(search_text, min_results=6):
     perform_search(min_results=min_results)
 
 # Add quick search buttons at the top
-quick_searches = ["think step by step", "tell me a joke about", "how old is my", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
-min_results_params = [1, 1, 1, 1, 2, 1, 6]  # Minimum results to display for each quick search
-col_widths = [2] + [2, 2, 2, 2, 2, 1.5, 1]
-cols = st.columns(col_widths)  # Use dynamic width values based on text length
+quick_searches = ["think step by step", "tell me a joke about", "imagine prompt", "how old is my", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
+min_results_params = [1, 1, 1, 1, 1, 2, 1, 6] 
+col_widths = [2] + [2, 2, 2, 2, 2, 2, 1.5, 1]
+cols = st.columns(col_widths) 
 with cols[0]:
     st.markdown("**Suggested searches:**")
 for i, search in enumerate(quick_searches):
@@ -169,7 +170,7 @@ grid_response = AgGrid(
     gridOptions=grid_options,
     update_mode=GridUpdateMode.SELECTION_CHANGED,
     fit_columns_on_grid_load=True,
-    height=175,
+    height=180,
     allow_unsafe_jscode=True
 )
 

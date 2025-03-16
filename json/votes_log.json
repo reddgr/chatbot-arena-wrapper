@@ -23,6 +23,12 @@
       "model": "claude-1",
       "vote": "downvote",
       "timestamp": "2025-03-15T23:55:53.771879"
+    },
+    {
+      "conversation_id": "a9ae4de8e7854b70a82e38543650cc3f",
+      "model": "mpt-30b-chat",
+      "vote": "upvote",
+      "timestamp": "2025-03-16T10:42:48.200388"
     }
   ]
 }
