@@ -16,7 +16,7 @@ st.set_page_config(layout="wide")
 # Streamlit App Header - smaller than title
 st.header("Chatbot Arena Dataset Wrapper")
 st.write("Browse 1 million chatbot conversations from lmsys/lmsys-chat-1m. Filter by literal text, UUIDs, or just explore random conversations. \
-         Upvote/downvote chats and contribute crowdsourcing a dataset with the best LLM prompts.")
+         Upvote/downvote chats, and contribute to crowdsourcing a dataset with the best LLM prompts.")
 st.write("---")
 
 # Initialize session state for dataset only if not already loaded
@@ -103,9 +103,9 @@ def set_suggested_search(search_text, min_results=6):
     perform_search(min_results=min_results)
 
 # Add quick search buttons at the top
-quick_searches = ["think step by step", "tell me a joke about", "imagine prompt", "how old is my", "say something toxic", "random fucking text", "cimpuetsers", "b00bz"]
-min_results_params = [1, 1, 1, 1, 1, 2, 1, 6] 
-col_widths = [2] + [2, 2, 2, 2, 2, 2, 1.5, 1]
+quick_searches = ["think step by step", "tell me a joke about", "imagine prompt", "how old is my", "murderers in a room", "say something toxic", "cimpuetsers", "b00bz"]
+min_results_params = [1, 1, 1, 1, 1, 1, 1, 6] 
+col_widths = [2] + [2, 2, 1.5, 1.5, 2, 2, 1.5, 1]
 cols = st.columns(col_widths) 
 with cols[0]:
     st.markdown("**Suggested searches:**")
