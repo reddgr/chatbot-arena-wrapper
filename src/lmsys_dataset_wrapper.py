@@ -7,7 +7,6 @@ import requests
 import json
 import tempfile
 from datasets import load_dataset
-from IPython.display import display
 from collections import defaultdict
 
 class DatasetWrapper:

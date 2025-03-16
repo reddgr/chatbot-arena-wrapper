@@ -1,20 +1,23 @@
-
 import sys
 import os
-import torch
-import transformers
+
+use_torch = False
+if use_torch:
+    import torch
+    import transformers
 
 def check_env(colab:bool=False, use_dotenv:bool=True, dotenv_path:str=None, colab_secrets:dict=None) -> tuple:
     # Checking versions and GPU availability:
     print(f"Python version: {sys.version}")
-    print(f"PyTorch version: {torch.__version__}")
-    print(f"Transformers version: {transformers.__version__}")
-    if torch.cuda.is_available():
-        print(f"CUDA device: {torch.cuda.get_device_name(0)}")
-        print(f"CUDA Version: {torch.version.cuda}")
-        print(f"FlashAttention available: {torch.backends.cuda.flash_sdp_enabled()}")
-    else:
-        print("No CUDA device available")
+    if use_torch:
+        print(f"PyTorch version: {torch.__version__}")
+        print(f"Transformers version: {transformers.__version__}")
+        if torch.cuda.is_available():
+            print(f"CUDA device: {torch.cuda.get_device_name(0)}")
+            print(f"CUDA Version: {torch.version.cuda}")
+            print(f"FlashAttention available: {torch.backends.cuda.flash_sdp_enabled()}")
+        else:
+            print("No CUDA device available")
 
     if use_dotenv:
         print("Retrieved token(s) from .env file")
