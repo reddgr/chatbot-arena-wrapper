@@ -1,0 +1,9 @@
+streamlit
+streamlit-aggrid
+duckdb
+pandas
+requests
+json
+torch
+transformers
+textwrap
