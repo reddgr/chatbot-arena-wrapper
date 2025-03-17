@@ -113,6 +113,7 @@ for i, search in enumerate(quick_searches):
     with cols[i+1]:  # Use i+1 since the first column is for the label
         st.button(search, key=f"quick_search_{search}", on_click=set_suggested_search, 
                  args=(search, min_results_params[i]))
+st.write("---")
 
 # Literal text search and ID filtering
 search_col1, search_col2, search_col3, search_col4, search_col5 = st.columns([3, 1, 1.5, 3, 1])
@@ -277,7 +278,7 @@ if len(selected_rows) > 0:
                 
                 # Show confirmation message
                 vote_type = "upvoted" if upvote else "downvoted"
-                st.success(f"You {vote_type} this conversation. Thank you for your feedback!")
+                st.success(f"You {vote_type} this conversation. Thank you for your contribution!")
 
         # Footer
         st.write("---")

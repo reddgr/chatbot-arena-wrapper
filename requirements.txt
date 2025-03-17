@@ -3,7 +3,6 @@ streamlit-aggrid
 duckdb
 pandas
 requests
-json
 torch
 transformers
-textwrap
+textwrap3
