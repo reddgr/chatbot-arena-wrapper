@@ -11,6 +11,10 @@ import json
 import os
 from datetime import datetime
 
+##### DGR DEBUG #########
+# streamlit run app.py  #
+#########################
+
 st.set_page_config(layout="wide")
 
 # Streamlit App Header - smaller than title
@@ -74,10 +78,14 @@ def go_to_previous_page():
         st.session_state.page_number -= 1
 
 def perform_search(min_results=6):
+    # print("TRACE 4: perform_search called")
     if st.session_state.search_box:
+        print(f"TRACE 5: Searching for: {st.session_state.search_box}")
         with st.spinner('Searching...'):
             wrapper.literal_text_search(filter_str=st.session_state.search_box, min_results=min_results)
             st.session_state.page_number = 1
+    else:  
+        print("TRACE 6: No search text in perform_search")
 
 def perform_id_filtering():
     if st.session_state.id_retrieve_box:
@@ -102,6 +110,15 @@ def set_suggested_search(search_text, min_results=6):
     # Perform the search using the same function as the search button
     perform_search(min_results=min_results)
 
+# Handle Enter key press for search
+def handle_enter_for_search():
+    print("TRACE 1: handle_enter_for_search triggered")
+    if st.session_state.search_box:
+        print(f"TRACE 2: Search text found: {st.session_state.search_box}")
+        perform_search()
+    else:
+        print("TRACE 3: No search text found")
+
 # Add quick search buttons at the top
 quick_searches = ["think step by step", "tell me a joke about", "imagine prompt", "how old is my", "murderers in a room", "say something toxic", "cimpuetsers", "b00bz"]
 min_results_params = [1, 1, 1, 1, 1, 1, 1, 6] 
@@ -123,7 +140,8 @@ with search_col1:
     "Search conversations", 
     key="search_box",
     label_visibility="collapsed",
-    placeholder="Enter literal search text..."
+    placeholder="Enter literal search text...",
+    on_change=handle_enter_for_search  # This triggers the search when Enter is pressed
     )
 
 with search_col2:
@@ -131,6 +149,11 @@ with search_col2:
 
 with search_col3:
     id_sample_button = st.button("Random sample", key="id_sample_button", on_click=perform_sampling)
+
+# Handler for ID retrieve on Enter
+def handle_enter_for_id_retrieve():
+    if st.session_state.id_retrieve_box:
+        perform_id_filtering()
 
 with search_col4:
     search_text = st.text_input(
